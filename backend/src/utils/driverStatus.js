@@ -13,7 +13,7 @@ const updateDriverStatus = async (driverName) => {
     // Let's assume if they have active jobs, they must be on duty.
     const pickups = await Pickup.find({
       assignedStaff: driverName,
-      status: { $in: ['Assign', 'Picked Up', 'In Progress'] }
+      status: { $in: ['Assigned', 'Picked Up', 'In Progress'] }
     });
 
     const deliveries = await Delivery.find({
