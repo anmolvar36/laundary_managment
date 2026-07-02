@@ -43,6 +43,20 @@ router.post('/login', async (req, res) => {
       });
     }
 
+    // Check if the branch exists and is active for non-Super Admin users
+    if (user.role && user.role.name !== 'Super Admin') {
+      if (!user.branch) {
+        return res.status(403).json({
+          message: 'Access denied. Your assigned branch does not exist or has been deleted.'
+        });
+      }
+      if (user.branch.status === 'Inactive') {
+        return res.status(403).json({
+          message: 'Access denied. Your assigned branch is currently inactive.'
+        });
+      }
+    }
+
     // Verify password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {

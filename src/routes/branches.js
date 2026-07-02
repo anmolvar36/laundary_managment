@@ -1,5 +1,7 @@
 const express = require('express');
 const Branch = require('../models/Branch');
+const User = require('../models/User');
+const Role = require('../models/Role');
 const { authenticate, requirePermission } = require('../middleware/auth');
 
 const router = express.Router();
@@ -17,11 +19,26 @@ const formatBranch = (branch) => {
 };
 
 // @route   GET /api/branches
-// @desc    Get all branches
+// @desc    Get all branches with populated assigned Admin name
 router.get('/', authenticate, async (req, res) => {
   try {
+    const adminRole = await Role.findOne({ name: 'Admin' });
+    const admins = adminRole ? await User.find({ role: adminRole._id }) : [];
+
     const branches = await Branch.find().sort({ createdAt: -1 });
-    res.json(branches.map(formatBranch));
+    const formatted = branches.map(branch => {
+      const assignedAdmin = admins.find(a => a.branch && a.branch.toString() === branch._id.toString());
+      return {
+        id: branch._id.toString(),
+        name: branch.name,
+        address: branch.address,
+        phone: branch.phone,
+        manager: assignedAdmin ? assignedAdmin.name : '',
+        status: branch.status
+      };
+    });
+
+    res.json(formatted);
   } catch (error) {
     console.error('Get branches error:', error);
     res.status(500).json({ message: 'Internal server error' });
